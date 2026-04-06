@@ -14,7 +14,7 @@ export async function getQuote(symbol: string): Promise<StockQuote | null> {
     if (!res.ok) return null
     const data = await res.json()
     if (!data.c || data.c === 0) return null
-    return { symbol, currentPrice: data.c, change: data.d, changePercent: data.dp }
+    return { symbol, currentPrice: data.c, change: data.d ?? 0, changePercent: data.dp ?? 0 }
   } catch {
     return null
   }
@@ -26,6 +26,7 @@ export async function searchSymbol(query: string): Promise<SymbolSearchResult[]>
     const res = await fetch(`${BASE}/search?q=${encodeURIComponent(query)}&token=${API_KEY}`)
     if (!res.ok) return []
     const data = await res.json()
+    if (!Array.isArray(data.result)) return []
     return (data.result as Array<{ symbol: string; description: string; type: string }>)
       .filter(r => r.type === 'Common Stock' || r.type === 'ETP')
       .map(r => ({ symbol: r.symbol, name: r.description, type: r.type }))

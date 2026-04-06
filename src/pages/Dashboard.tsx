@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { PieChart, Pie, Tooltip } from 'recharts'
 import { useTransactions } from '../hooks/useTransactions'
 import { useStockPrices } from '../hooks/useStockPrices'
@@ -19,13 +20,13 @@ export default function Dashboard() {
   const { transactions, targetPrices, loading } = useTransactions()
   const summary = calculateDashboard(transactions, targetPrices)
   const holdings = calculateHoldings(transactions, targetPrices)
-  const symbols = holdings.map(h => h.symbol)
+  const symbols = useMemo(() => holdings.map(h => h.symbol), [holdings])
   const { prices } = useStockPrices(symbols)
 
   // Market value calculations
   const marketValues = holdings.map(h => {
     const q = prices.get(h.symbol)
-    return { symbol: h.symbol, name: h.name, total_cost: h.total_cost, average_cost: h.average_cost, quantity: h.quantity, marketValue: q ? q.currentPrice * h.quantity : null }
+    return { symbol: h.symbol, total_cost: h.total_cost, marketValue: q ? q.currentPrice * h.quantity : null }
   })
   const totalMarketValue = marketValues.reduce((s, m) => s + (m.marketValue ?? 0), 0)
   const totalUnrealizedPL = marketValues.reduce((s, m) => {

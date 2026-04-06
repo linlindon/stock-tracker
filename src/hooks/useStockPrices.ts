@@ -6,15 +6,18 @@ export function useStockPrices(symbols: string[]) {
   const [prices, setPrices] = useState<Map<string, StockQuote>>(new Map())
   const [loading, setLoading] = useState(false)
 
+  const symbolKey = symbols.join(',')
+
   const refresh = useCallback(async () => {
-    if (symbols.length === 0) {
+    const syms = symbolKey ? symbolKey.split(',') : []
+    if (syms.length === 0) {
       setPrices(new Map())
       setLoading(false)
       return
     }
     setLoading(true)
     const entries = await Promise.all(
-      symbols.map(async s => {
+      syms.map(async s => {
         const q = await getQuote(s)
         return q ? ([s, q] as [string, StockQuote]) : null
       })
@@ -25,10 +28,10 @@ export function useStockPrices(symbols: string[]) {
     }
     setPrices(map)
     setLoading(false)
-  }, [symbols.join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [symbolKey])
 
   useEffect(() => {
-    refresh()
+    refresh() // eslint-disable-line react-hooks/set-state-in-effect
   }, [refresh])
 
   return { prices, loading, refresh }

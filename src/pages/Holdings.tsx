@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTransactions } from '../hooks/useTransactions'
 import { useStockPrices } from '../hooks/useStockPrices'
@@ -20,7 +20,7 @@ export default function Holdings() {
   const navigate = useNavigate()
   const [editTarget, setEditTarget] = useState<{ symbol: string; value: string } | null>(null)
   const holdings = calculateHoldings(transactions, targetPrices)
-  const symbols = holdings.map(h => h.symbol)
+  const symbols = useMemo(() => holdings.map(h => h.symbol), [holdings])
   const { prices, loading: pricesLoading, refresh } = useStockPrices(symbols)
 
   // Summary calculations
