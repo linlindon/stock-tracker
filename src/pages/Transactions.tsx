@@ -14,7 +14,7 @@ const glossaryItems = [
 
 export default function Transactions() {
   const { transactions, loading, addTransaction, deleteTransaction } = useTransactions()
-  const { savePairs } = useTradePairs()
+  const { tradePairs, savePairs } = useTradePairs()
   const [showForm, setShowForm] = useState(false)
 
   const handleSubmit = async (form: TForm, pairSelections: TradePairSelection[]) => {
@@ -43,7 +43,12 @@ export default function Transactions() {
               <h2 className="font-bold">新增交易</h2>
               <button onClick={() => setShowForm(false)} className="text-gray-400">✕</button>
             </div>
-            <TransactionForm onSubmit={handleSubmit} onClose={() => setShowForm(false)} />
+            <TransactionForm
+              onSubmit={handleSubmit}
+              onClose={() => setShowForm(false)}
+              buyTransactions={transactions}
+              allTradePairs={tradePairs}
+            />
           </div>
         </div>
       )}

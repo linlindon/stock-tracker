@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { TransactionForm as TForm, TradePairSelection } from '../types'
+import type { DbTransaction, DbTradePair, TransactionForm as TForm, TradePairSelection } from '../types'
+import BuyLotSelector from './BuyLotSelector'
 
 // 表單內部狀態：數字欄位用 string 存（HTML input 回傳字串）
 interface FormState {
@@ -23,12 +24,13 @@ const EMPTY_FORM: FormState = {
 interface Props {
   onSubmit: (form: TForm, pairSelections: TradePairSelection[]) => Promise<void>
   onClose: () => void
-  // 賣出配對區塊（Task 12 插入）
-  buyLotSelectorSlot?: React.ReactNode
+  buyTransactions: DbTransaction[]
+  allTradePairs: DbTradePair[]
 }
 
-export default function TransactionForm({ onSubmit, onClose, buyLotSelectorSlot }: Props) {
+export default function TransactionForm({ onSubmit, onClose, buyTransactions, allTradePairs }: Props) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [pairSelections, setPairSelections] = useState<TradePairSelection[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,7 +49,7 @@ export default function TransactionForm({ onSubmit, onClose, buyLotSelectorSlot 
         price: parseFloat(form.price),
         fee: form.fee ? parseFloat(form.fee) : 0,
       }
-      await onSubmit(parsed, [])
+      await onSubmit(parsed, form.transaction_type === 'Sell' ? pairSelections : [])
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : '新增失敗')
@@ -125,8 +127,19 @@ export default function TransactionForm({ onSubmit, onClose, buyLotSelectorSlot 
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" rows={2} />
       </div>
 
-      {/* 賣出配對區塊（Task 12 插入） */}
-      {buyLotSelectorSlot}
+      {/* 賣出時顯示配對買入選擇器 */}
+      {form.transaction_type === 'Sell' && form.symbol && (
+        <BuyLotSelector
+          symbol={form.symbol}
+          sellQuantity={parseFloat(form.quantity) || 0}
+          sellPrice={parseFloat(form.price) || 0}
+          sellFee={parseFloat(form.fee) || 0}
+          buyTransactions={buyTransactions}
+          allTradePairs={allTradePairs}
+          selections={pairSelections}
+          onChange={setPairSelections}
+        />
+      )}
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
