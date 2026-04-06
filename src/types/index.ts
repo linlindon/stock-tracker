@@ -109,6 +109,19 @@ export interface DashboardSummary {
   holding_count: number;
 }
 
+export interface StockQuote {
+  symbol: string;
+  currentPrice: number;
+  change: number;        // today's price change in dollars
+  changePercent: number; // today's change as a percentage
+}
+
+export interface SymbolSearchResult {
+  symbol: string;
+  name: string;
+  type: string; // 'Common Stock' | 'ETP' etc
+}
+
 export interface StockDetailSummary {
   symbol: string;
   name: string;
