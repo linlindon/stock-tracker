@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import type { DbTransaction, DbTradePair, TransactionForm as TForm, TradePairSelection } from '../types'
+import { useState, useEffect, useRef } from 'react'
+import type { DbTransaction, DbTradePair, TransactionForm as TForm, TradePairSelection, SymbolSearchResult } from '../types'
+import { searchSymbol } from '../lib/finnhub'
 import BuyLotSelector from './BuyLotSelector'
 
-// 表單內部狀態：數字欄位用 string 存（HTML input 回傳字串）
 interface FormState {
   symbol: string
   name: string
@@ -33,16 +33,51 @@ export default function TransactionForm({ onSubmit, onClose, buyTransactions, al
   const [pairSelections, setPairSelections] = useState<TradePairSelection[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [searchResults, setSearchResults] = useState<SymbolSearchResult[]>([])
+  const [searching, setSearching] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const skipNextSearch = useRef(false)
 
   const set = (field: keyof FormState, value: string) =>
     setForm(prev => ({ ...prev, [field]: value }))
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Debounced symbol search
+  useEffect(() => {
+    if (skipNextSearch.current) {
+      skipNextSearch.current = false
+      return
+    }
+    if (form.symbol.length < 1) {
+      setSearchResults([])
+      setShowDropdown(false)
+      return
+    }
+    setSearching(true)
+    const timer = setTimeout(async () => {
+      const results = await searchSymbol(form.symbol)
+      setSearchResults(results)
+      setShowDropdown(results.length > 0)
+      setSearching(false)
+    }, 500)
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [form.symbol])
+
+  const handleSelectSymbol = (result: SymbolSearchResult) => {
+    skipNextSearch.current = true
+    set('symbol', result.symbol)
+    set('name', result.name)
+    set('asset_type', result.type === 'ETP' ? 'ETF' : 'Stock')
+    setShowDropdown(false)
+    setSearchResults([])
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
     try {
-      // 送出前將字串轉換為數字
       const parsed: TForm = {
         ...form,
         quantity: parseFloat(form.quantity),
@@ -69,11 +104,34 @@ export default function TransactionForm({ onSubmit, onClose, buyTransactions, al
         ))}
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">代號 *</label>
-        <input required value={form.symbol} onChange={e => set('symbol', e.target.value.toUpperCase())}
+      <div className="relative">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          代號 * {searching && <span className="text-xs text-gray-400 font-normal">搜尋中...</span>}
+        </label>
+        <input
+          required
+          value={form.symbol}
+          onChange={e => {
+            set('symbol', e.target.value.toUpperCase())
+            set('name', '')
+          }}
+          onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
           placeholder="例如 AAPL" />
+        {showDropdown && searchResults.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            {searchResults.map(r => (
+              <button
+                key={r.symbol}
+                type="button"
+                onMouseDown={() => handleSelectSymbol(r)}
+                className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm">
+                <span className="font-medium">{r.symbol}</span>
+                <span className="text-gray-400 ml-2 text-xs">{r.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>
@@ -127,7 +185,6 @@ export default function TransactionForm({ onSubmit, onClose, buyTransactions, al
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" rows={2} />
       </div>
 
-      {/* 賣出時顯示配對買入選擇器 */}
       {form.transaction_type === 'Sell' && form.symbol && (
         <BuyLotSelector
           symbol={form.symbol}
