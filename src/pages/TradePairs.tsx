@@ -29,16 +29,16 @@ export default function TradePairs() {
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-xl font-bold mb-4">短線配對</h1>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
+      <div className="flex flex-col gap-2 mb-4">
+        <div className="bg-white border border-gray-200 rounded-lg px-4 py-1 flex items-center justify-between">
           <div className="text-xs text-gray-400">配對筆數</div>
-          <div className="font-bold text-xl">{records.length}</div>
+          <div className="font-bold">{records.length}</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
+        <div className="bg-white border border-gray-200 rounded-lg px-4 py-1 flex items-center justify-between">
           <div className="text-xs text-gray-400">自選總損益</div>
           <div className={`font-bold ${plColorClass(totalCustomPL)}`}>{formatCurrency(totalCustomPL)}</div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
+        <div className="bg-white border border-gray-200 rounded-lg px-4 py-1 flex items-center justify-between">
           <div className="text-xs text-gray-400">平均自選報酬率</div>
           <div className={`font-bold ${plColorClass(avgCustomReturn)}`}>{formatPercent(avgCustomReturn)}</div>
         </div>

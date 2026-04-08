@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
-html {
-  font-size: 18px;
+@layer base {
+  html {
+    font-size: 19px;
+  }
 }
