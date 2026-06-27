@@ -2,8 +2,8 @@ name: Supabase Keep Alive
 
 on:
   schedule:
-    # 每 5 天跑一次,UTC 時間 00:00
-    - cron: '0 0 */5 * *'
+    # 每 3 天跑一次,UTC 時間 00:00
+    - cron: '0 0 */3 * *'
   workflow_dispatch:  # 允許手動觸發測試
 
 jobs:
